@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+*.md
+LICENSE
+tests/
+docs/
+examples/
+.pytest_cache
+.coverage
+htmlcov/
+*.pem
+.idea/
+.vscode/
