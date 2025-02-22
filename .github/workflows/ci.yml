@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, development ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, development ]
 
 jobs:
   test:
@@ -15,12 +15,26 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
+      - name: Copy environment file
+        run: cp .env.development .env
+      
       - name: Build and test
         run: |
+          docker compose version
           docker compose -f docker-compose.dev.yml build
           docker compose -f docker-compose.dev.yml up -d
-          docker compose -f docker-compose.dev.yml exec -T backend python -m pytest tests/
+          docker compose -f docker-compose.dev.yml exec -T reproschema python -m pytest tests/
           docker compose -f docker-compose.dev.yml down
+        env:
+          NODE_ENV: development
+          DEV_MODE: 1
+          PROJECT_NAME: development
+          SCHEMA_URL: http://localhost:80/schema/demo-protocol.json
+          LOCAL_SCHEMA_DIR: ./schemas
+          FRONTEND_PORT: 3000
+          BACKEND_PORT: 8000
+          PORT: 80
+          NGINX_HOST: localhost
 
   docker:
     needs: test
