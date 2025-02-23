@@ -56,6 +56,8 @@ setup_config() {
     log "Environment variables:"
     log "  SCHEMA_SOURCE: ${SCHEMA_SOURCE}"
     log "  BACKEND_URL: ${BACKEND_URL}"
+    # Get token from file
+    INITIAL_TOKEN=$(cat /tmp/token)
     log "  INITIAL_TOKEN: ${INITIAL_TOKEN}"
     log "Schema values:"
     log "  banner: ${banner}"

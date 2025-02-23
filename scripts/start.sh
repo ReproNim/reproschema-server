@@ -21,6 +21,13 @@ envsubst '${ASSETS_PUBLIC_PATH}' < /etc/nginx/conf.d/default.conf.template > /et
 log "Nginx config:"
 cat /etc/nginx/conf.d/default.conf | grep -A 5 "location.*${ASSETS_PUBLIC_PATH}"
 
+# Log token early, before SSL noise
+if [ "${DEV_MODE}" = "1" ]; then
+    echo "================================================================"
+    log "BACKEND TOKEN: ${INITIAL_TOKEN:-$(cat /tmp/token)}"
+    echo "================================================================"
+fi
+
 # Setup SSL certificates
 /app/scripts/setup-ssl.sh
 
@@ -30,8 +37,21 @@ nginx
 
 # Start backend
 log "Starting Python backend..."
-python app.py &
+# Ensure backend has correct token
+export INITIAL_TOKEN="$(cat /tmp/token)"
+# Ensure data directory exists and is writable
+mkdir -p /data/responses
+mkdir -p /data/logs
+python app.py > /data/logs/backend.log 2>&1 &
 BACKEND_PID=$!
+log "Backend started with PID: ${BACKEND_PID}"
+
+# Verify backend process is running
+if ! kill -0 $BACKEND_PID 2>/dev/null; then
+    log "Backend failed to start! Logs:"
+    cat /data/logs/backend.log
+    exit 1
+fi
 
 # Wait for backend to be ready
 log "Waiting for backend to be ready..."
@@ -41,6 +61,8 @@ until curl -s http://localhost:8000/health > /dev/null; do
     ATTEMPTS=$((ATTEMPTS + 1))
     if [ $ATTEMPTS -ge $MAX_ATTEMPTS ]; then
         log "Backend failed to start after $MAX_ATTEMPTS attempts"
+        log "Backend logs:"
+        cat /data/logs/backend.log
         exit 1
     fi
     log "Attempt $ATTEMPTS: Backend not ready yet..."
@@ -48,5 +70,12 @@ until curl -s http://localhost:8000/health > /dev/null; do
 done
 log "Backend is ready"
 
-# Wait for processes
-wait $BACKEND_PID
+# Keep container running
+while kill -0 $BACKEND_PID 2>/dev/null; do
+    tail -f /data/logs/backend.log &
+    wait $BACKEND_PID
+done
+
+log "Backend exited unexpectedly! Logs:"
+cat /data/logs/backend.log
+exit 1

@@ -6,10 +6,11 @@ RUN pip install --no-cache-dir sanic sanic-ext requests jsonschema uuid
 
 # Start backend temporarily to get token
 RUN mkdir -p /data/logs && \
-    python app.py & \
+    python app.py > /data/logs/startup.log 2>&1 & \
     sleep 2 && \
-    export INITIAL_TOKEN=$(grep "TOKEN:" /data/logs/* | cut -d':' -f2) && \
-    echo $INITIAL_TOKEN > /tmp/token
+    grep "Warning: INITIAL_TOKEN not set, generated:" /data/logs/startup.log | head -n1 | cut -d':' -f3 | tr -d ' ' > /tmp/token && \
+    echo "Saved token: $(cat /tmp/token)" && \
+    cat /data/logs/startup.log  # Debug output
 
 # 2. Frontend stage
 FROM node:18-alpine as frontend-builder
@@ -32,7 +33,9 @@ RUN chmod +x setup-config.sh
 
 # 3. Set up config with everything we need
 COPY --from=backend-builder /tmp/token /tmp/token
-ENV INITIAL_TOKEN="$(cat /tmp/token)"
+RUN INITIAL_TOKEN=$(cat /tmp/token) && \
+    echo "Got token: $INITIAL_TOKEN" && \
+    echo "INITIAL_TOKEN=$INITIAL_TOKEN" >> /tmp/env_vars
 ENV BACKEND_URL="/api"
 
 # 4. Run setup-config.sh to prepare config
@@ -54,9 +57,11 @@ RUN echo "=== Dist config.js ===" && cat dist/config.js || echo "No config.js in
 FROM python:3.11-slim
 WORKDIR /app
 
-# Get assets path from frontend stage
+# Get assets path and token from frontend stage
 COPY --from=frontend-builder /tmp/assets_path /tmp/assets_path
+COPY --from=frontend-builder /tmp/token /tmp/token
 ENV ASSETS_PUBLIC_PATH="$(cat /tmp/assets_path)"
+ENV INITIAL_TOKEN="$(cat /tmp/token)"
 
 # Install nginx and other required packages
 RUN apt-get update && \
@@ -84,8 +89,10 @@ RUN chmod +x /app/scripts/setup-ssl.sh
 # Create SSL directory
 RUN mkdir -p /etc/nginx/ssl
 
-# Create necessary directories
-RUN mkdir -p /schemas /data
+# Create necessary directories with proper permissions
+RUN mkdir -p /schemas /data && \
+    mkdir -p /data/responses && \
+    chmod -R 777 /data  # Ensure backend can write to data directory
 
 # Environment variables
 ENV REPROSCHEMA_BACKEND_BASEDIR=/data

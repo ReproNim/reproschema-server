@@ -16,7 +16,7 @@ services:
       # Local schema mount (only used when SCHEMA_SOURCE=local)
       - ${SCHEMA_PATH:-./schemas}:/schemas:ro
       # Data storage volume
-      - ${DATA_PATH:-./data}:/data
+      - ${DATA_PATH:-./data}:/data:rw
     environment:
       # Core settings
       - NODE_ENV=${NODE_ENV:-production}
@@ -31,8 +31,11 @@ services:
       
       # Backend configuration
       - REPROSCHEMA_BACKEND_BASEDIR=/data
-      - INITIAL_TOKEN=${INITIAL_TOKEN:-}
+      # For development mode
+      - DEV8dac6d02a913=${DEV_MODE:-1}
       - BACKEND_URL=${BACKEND_URL:-/api}
+      # Project name for data organization
+      - PROJECT_NAME=${PROJECT_NAME:-demo}
       
       # Development settings
       - DEV_MODE=${DEV_MODE:-0}

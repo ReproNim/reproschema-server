@@ -18,7 +18,7 @@ from config import (
 app = Sanic("reproschema_backend")
 Extend(app)
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check(request):
     print("Health check requested")
     return json({"status": "healthy"})
@@ -35,7 +35,7 @@ if not INITIAL_TOKEN:
 else:
     print(f"Using INITIAL_TOKEN from environment: {INITIAL_TOKEN}")
 
-@app.get("/token")
+@app.get("/api/token")
 async def get_token(request):
     token = request.args.get('token')
     project = request.args.get('project', os.getenv('STUDY_PREFIX', 'study'))
@@ -58,7 +58,7 @@ async def get_token(request):
     })
 
 # Add register endpoint for local development
-@app.get("/register")
+@app.get("/api/register")
 async def register(request):
     if not os.getenv('DEV_MODE'):
         return json({"error": "Registration only available in dev mode"}, status=403)
@@ -74,6 +74,10 @@ async def register(request):
 @app.post("/api/responses")
 async def submit_data(request):
     auth_token = request.headers.get('Authorization')
+    
+    # Strip "Bearer " prefix if present
+    if auth_token and auth_token.startswith('Bearer '):
+        auth_token = auth_token.split(' ')[1]
     
     if not auth_token or auth_token not in auth_tokens:
         return json({"error": "Invalid auth token"}, status=401)
@@ -126,8 +130,8 @@ async def root(request):
     return json({
         "status": "running",
         "endpoints": [
-            "/health",
-            "/token",
+            "/api/health",
+            "/api/token",
             "/api/responses",
             "/api/schema/<url>"
         ]
