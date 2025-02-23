@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  reproschema:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        - NODE_ENV=development
+    ports:
+      - "${PORT:-80}:80"
+      - "8000:8000"
+    volumes:
+      # Development-specific volume mounts
+      - ./docker/frontend:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./docker/backend:/app
+      - ./tests:/app/tests
+      # Production volume mounts
+      - ${SCHEMA_PATH:-./schemas}:/schemas:ro
+      - ${DATA_PATH:-./data}:/data
+    environment:
+      # Development-specific settings
+      - NODE_ENV=development
+      - VUE_APP_HOT_RELOAD=true
+      - DEV_MODE=1
+      
+      # Core settings from production
+      - SCHEMA_SOURCE=${SCHEMA_SOURCE:-https://raw.githubusercontent.com/ReproNim/demo-protocol/main/DemoProtocol/DemoProtocol_schema}
+      - REPROSCHEMA_BACKEND_BASEDIR=/data
+      - INITIAL_TOKEN=${INITIAL_TOKEN:-}
+      - BACKEND_URL=${BACKEND_URL:-/api}
+      
+      # Override SCHEMA_URL for development if needed
+      - VUE_APP_SCHEMA_URL=${SCHEMA_URL:-http://localhost:${PORT:-80}/schema/demo-protocol.json}
+    
+    # Development-specific command to enable hot reloading
+    command: sh -c "npm run serve & uvicorn main:app --host 0.0.0.0 --port ${BACKEND_PORT:-8000} --reload"
+
+volumes:
+  participant_data:
+    name: ${PROJECT_NAME:-reproschema}_data

@@ -12,3 +12,5 @@ htmlcov/
 *.pem
 .idea/
 .vscode/
+node_modules
+npm-debug.log*
