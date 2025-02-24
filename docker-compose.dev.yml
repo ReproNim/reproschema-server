@@ -17,6 +17,9 @@ services:
       - ${SCHEMA_PATH:-./schemas}:/schemas:ro
       # Data storage volume
       - ${DATA_PATH:-./data}:/data:rw
+      # Development volumes
+      - ./docker/backend:/app  # For live backend changes
+      - ./tests:/app/tests:ro  # Mount from project root, read-only
     environment:
       # Core settings
       - NODE_ENV=${NODE_ENV:-development}  # Default to development
