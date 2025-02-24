@@ -1,42 +1,79 @@
 version: '3.8'
-
 services:
-  reproschema:
+  reproschema-server:
+    container_name: ${CONTAINER_NAME:-reproschema-server}
     build:
       context: .
       dockerfile: docker/Dockerfile
       args:
-        - NODE_ENV=development
+        NODE_VERSION: "18"
+        SCHEMA_SOURCE: ${SCHEMA_SOURCE:-https://raw.githubusercontent.com/ReproNim/demo-protocol/main/DemoProtocol/DemoProtocol_schema}
+        ASSETS_PUBLIC_PATH: ${ASSETS_PUBLIC_PATH:-/}  # uppercase, consistent
     ports:
       - "${PORT:-80}:80"
-      - "8000:8000"
+      - "8000:8000"  # Backend API port
     volumes:
-      # Development-specific volume mounts
-      - ./docker/frontend:/usr/src/app
-      - /usr/src/app/node_modules
-      - ./docker/backend:/app
-      - ./tests:/app/tests
-      # Production volume mounts
+      # Local schema mount (only used when SCHEMA_SOURCE=local)
       - ${SCHEMA_PATH:-./schemas}:/schemas:ro
-      - ${DATA_PATH:-./data}:/data
+      # Data storage volume
+      - ${DATA_PATH:-./data}:/data:rw
     environment:
-      # Development-specific settings
-      - NODE_ENV=development
-      - VUE_APP_HOT_RELOAD=true
-      - DEV_MODE=1
+      # Core settings
+      - NODE_ENV=${NODE_ENV:-development}  # Default to development
       
-      # Core settings from production
+      # Schema configuration
       - SCHEMA_SOURCE=${SCHEMA_SOURCE:-https://raw.githubusercontent.com/ReproNim/demo-protocol/main/DemoProtocol/DemoProtocol_schema}
-      - REPROSCHEMA_BACKEND_BASEDIR=/data
-      - INITIAL_TOKEN=${INITIAL_TOKEN:-}
-      - BACKEND_URL=${BACKEND_URL:-/api}
       
-      # Override SCHEMA_URL for development if needed
-      - VUE_APP_SCHEMA_URL=${SCHEMA_URL:-http://localhost:${PORT:-80}/schema/demo-protocol.json}
-    
-    # Development-specific command to enable hot reloading
-    command: sh -c "npm run serve & uvicorn main:app --host 0.0.0.0 --port ${BACKEND_PORT:-8000} --reload"
+      # UI configuration
+      - BANNER=${BANNER:-Reproschema Protocol}
+      - START_BUTTON=${START_BUTTON:-Start}
+      - STUDY_PREFIX=${STUDY_PREFIX:-study}
+      
+      # Backend configuration
+      - REPROSCHEMA_BACKEND_BASEDIR=/data
+      # For development mode
+      - DEV8dac6d02a913=${DEV_MODE:-1}
+      - BACKEND_URL=${BACKEND_URL:-/api}
+      # Project name for data organization
+      - PROJECT_NAME=${PROJECT_NAME:-development}  # Default to development
+      
+      # Development settings
+      - DEV_MODE=${DEV_MODE:-1}  # Default to development mode ON
+      - ADMIN_MODE=${ADMIN_MODE:-true}
+      - DEBUG_MODE=${DEBUG_MODE:-true}
+      
+      # Additional configuration
+      - VALIDATE_SCHEMA=${VALIDATE_SCHEMA:-true}
+      - SCHEMA_TYPE=${SCHEMA_TYPE:-jsonld}
+      
+      # Runtime configuration
+      - ASSETS_PUBLIC_PATH=${ASSETS_PUBLIC_PATH:-/}  # Use same default as build arg
+      
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - reproschema-net
 
 volumes:
   participant_data:
     name: ${PROJECT_NAME:-reproschema}_data
+    driver: local
+    driver_opts:
+      type: none
+      device: ${DATA_PATH:-./data}
+      o: bind
+
+networks:
+  reproschema-net:
+    name: ${PROJECT_NAME:-reproschema}_network
+    driver: bridge

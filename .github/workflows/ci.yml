@@ -23,18 +23,27 @@ jobs:
           docker compose version
           docker compose -f docker-compose.dev.yml build
           docker compose -f docker-compose.dev.yml up -d
-          docker compose -f docker-compose.dev.yml exec -T reproschema python -m pytest tests/
+          docker compose -f docker-compose.dev.yml exec -T reproschema-server python -m pytest tests/
           docker compose -f docker-compose.dev.yml down
         env:
+          # Core settings
           NODE_ENV: development
+          CONTAINER_NAME: reproschema-server
+          
+          # Schema configuration
+          SCHEMA_SOURCE: https://raw.githubusercontent.com/ReproNim/demo-protocol/main/DemoProtocol/DemoProtocol_schema
+          SCHEMA_PATH: ./schemas
+          
+          # Data paths
+          DATA_PATH: ./data
+          
+          # Project configuration
+          PROJECT_NAME: development  # Match development environment
+          
+          # Development settings
           DEV_MODE: 1
-          PROJECT_NAME: development
-          SCHEMA_URL: http://localhost:80/schema/demo-protocol.json
-          LOCAL_SCHEMA_DIR: ./schemas
-          FRONTEND_PORT: 3000
-          BACKEND_PORT: 8000
-          PORT: 80
-          NGINX_HOST: localhost
+          ADMIN_MODE: true
+          DEBUG_MODE: true
 
   docker:
     needs: test
@@ -51,6 +60,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build and push Docker images
+        env:
+          NODE_ENV: production  # Ensure production build
+          PROJECT_NAME: reproschema  # Use production name
         run: |
           docker compose -f docker-compose.yml build
           docker compose -f docker-compose.yml push

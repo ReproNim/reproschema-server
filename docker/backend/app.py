@@ -37,6 +37,7 @@ else:
 
 @app.get("/api/token")
 async def get_token(request):
+    print("Token request:", request.args)  # Debug token requests
     token = request.args.get('token')
     project = request.args.get('project', os.getenv('STUDY_PREFIX', 'study'))
     expiry_minutes = int(request.args.get('expiry_minutes', 90))
@@ -73,6 +74,8 @@ async def register(request):
 
 @app.post("/api/responses")
 async def submit_data(request):
+    print("Response headers:", request.headers)  # Debug headers
+    print("Response data:", request.json)  # Debug data
     auth_token = request.headers.get('Authorization')
     
     # Strip "Bearer " prefix if present
