@@ -21,6 +21,8 @@ jobs:
       - name: Build and test
         run: |
           docker compose version
+          mkdir -p tests
+          cp -r docker/backend/tests/* tests/
           docker compose -f docker-compose.dev.yml build
           docker compose -f docker-compose.dev.yml up -d
           docker compose -f docker-compose.dev.yml exec -T reproschema-server pip install pytest pytest-asyncio pytest-cov
