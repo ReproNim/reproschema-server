@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   reproschema-server:
     container_name: ${CONTAINER_NAME:-reproschema-server}
@@ -19,7 +18,7 @@ services:
       - ${DATA_PATH:-./data}:/data:rw
       # Development volumes
       - ./docker/backend:/app  # For live backend changes
-      - ./tests:/app/tests:ro  # Mount from project root, read-only
+      - ./docker/backend/tests:/app/tests:ro  # Mount from backend directory
     environment:
       # Core settings
       - NODE_ENV=${NODE_ENV:-development}  # Default to development

@@ -21,10 +21,13 @@ jobs:
       - name: Build and test
         run: |
           docker compose version
+          # Ensure tests directory exists and is copied to the right place
+          mkdir -p docker/backend/tests
+          cp tests/test_api.py docker/backend/tests/
           docker compose -f docker-compose.dev.yml build
           docker compose -f docker-compose.dev.yml up -d
           docker compose -f docker-compose.dev.yml exec -T reproschema-server pip install pytest pytest-asyncio pytest-cov
-          docker compose -f docker-compose.dev.yml exec -T reproschema-server python -m pytest tests/
+          docker compose -f docker-compose.dev.yml exec -T reproschema-server python -m pytest /app/tests/
           docker compose -f docker-compose.dev.yml down
         env:
           # Core settings
