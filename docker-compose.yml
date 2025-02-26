@@ -11,6 +11,7 @@ services:
         ASSETS_PUBLIC_PATH: ${ASSETS_PUBLIC_PATH:-/}  # uppercase, consistent
     ports:
       - "${PORT:-80}:80"
+      - "443:443"
       - "8000:8000"  # Backend API port
     volumes:
       # Local schema mount (only used when SCHEMA_SOURCE=local)
