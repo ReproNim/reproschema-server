@@ -16,3 +16,6 @@ htmlcov/
 *.pem
 .idea/
 .vscode/
+
+# Internal documentation
+internal/
