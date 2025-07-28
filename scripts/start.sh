@@ -8,6 +8,7 @@ log() {
 
 # Initialize directories
 mkdir -p /data/responses
+mkdir -p /data/schemas
 
 # Configure nginx with assets path
 if [ -f /tmp/assets_path ]; then
@@ -45,6 +46,7 @@ else
 fi
 # Ensure data directory exists and is writable
 mkdir -p /data/responses
+mkdir -p /data/schemas
 mkdir -p /data/logs
 python app.py > /data/logs/backend.log 2>&1 &
 BACKEND_PID=$!
