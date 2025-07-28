@@ -7,9 +7,6 @@ import jwt
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'docker', 'backend'))
-
 from auth import AuthManager, TokenData, require_auth
 
 @pytest.fixture
@@ -252,4 +249,7 @@ class TestRequireAuthDecorator:
         
         response = await protected_endpoint(request)
         assert response.status == 403
-        assert "Permission 'write' required" in str(response.body)
+        # The response body is JSON, so we need to decode it
+        import json
+        error_data = json.loads(response.body)
+        assert "Permission 'write' required" in error_data['error']

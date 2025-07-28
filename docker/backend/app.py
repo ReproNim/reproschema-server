@@ -3,6 +3,7 @@ Improved ReproSchema Server with enhanced security and structure
 """
 import os
 import uuid
+import json
 from datetime import datetime
 from typing import Dict, Any
 from pathlib import Path
