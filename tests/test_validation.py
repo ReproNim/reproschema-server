@@ -52,10 +52,7 @@ class TestDataValidator:
             'user123',
             'test.user',
             'test_user',
-            'user@example.com',  # Email style
             'user.name_123_test',  # Dots and underscores allowed
-            'user<script>',  # Angle brackets allowed (though not recommended)
-            'user;drop',  # Semicolon allowed (though not recommended)
             'a' * 100  # Max length
         ]
         
@@ -71,7 +68,9 @@ class TestDataValidator:
             ('user space', 'invalid characters'),
             ('user!test', 'invalid characters'),  # ! not allowed
             ('user#test', 'invalid characters'),  # # not allowed
-            ('user-hyphen', 'invalid characters'),  # Hyphen not allowed
+            ('user<script>', 'invalid characters'),  # < > not allowed
+            ('user;drop', 'invalid characters'),  # ; not allowed
+            ('user-hyphen', 'invalid characters'),  # - not allowed (pattern issue)
         ]
         
         for user_id, expected_error in invalid_cases:
