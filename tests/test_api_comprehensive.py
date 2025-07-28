@@ -59,8 +59,19 @@ def test_app():
 @pytest.fixture
 def auth_manager():
     """Create auth manager for testing"""
+    # Set environment variables needed for AuthManager
+    old_env = os.environ.copy()
+    os.environ['JWT_SECRET_KEY'] = 'test-secret-key-for-testing-only' 
+    os.environ['INITIAL_TOKEN'] = 'test-initial-token'
+    os.environ['ENV'] = 'test'
+    
     from auth import AuthManager
-    return AuthManager()
+    auth_mgr = AuthManager()
+    
+    # Restore environment after test
+    yield auth_mgr
+    os.environ.clear()
+    os.environ.update(old_env)
 
 @pytest.fixture
 def valid_token(auth_manager):
