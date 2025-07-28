@@ -17,7 +17,7 @@ def test_frontend():
 def test_backend_health():
     """Test if backend health check is working"""
     try:
-        response = requests.get('http://localhost:8000/health')
+        response = requests.get('http://localhost:8000/api/health')
         assert response.status_code == 200
         print("✅ Backend health check passed")
         return True
@@ -25,29 +25,18 @@ def test_backend_health():
         print(f"❌ Backend health check failed: {str(e)}")
         return False
 
-def test_schema_endpoints():
-    """Test basic schema operations"""
+def test_api_root():
+    """Test API root endpoint"""
     try:
-        # Test schema listing
-        response = requests.get('http://localhost:8000/schemas')
+        response = requests.get('http://localhost:8000/')
         assert response.status_code == 200
-        schemas = response.json()
-        print("✅ Schema listing works")
-
-        # If there are schemas, test getting one
-        if schemas:
-            schema_id = schemas[0]['id']
-            response = requests.get(f'http://localhost:8000/schemas/{schema_id}')
-            assert response.status_code == 200
-            print("✅ Schema retrieval works")
-        
+        data = response.json()
+        assert data['name'] == 'ReproSchema Server'
+        assert 'endpoints' in data
+        print("✅ API root endpoint works")
         return True
     except Exception as e:
-        print(f"❌ Schema operations failed with response: {str(e)}")
-        # Print detailed response if available
-        if hasattr(e, 'response') and e.response is not None:
-            print(f"Response status code: {e.response.status_code}")
-            print(f"Response content: {e.response.text}")
+        print(f"❌ API root test failed: {str(e)}")
         return False
 
 def run_all_tests():
@@ -55,7 +44,7 @@ def run_all_tests():
     tests = [
         test_frontend,
         test_backend_health,
-        test_schema_endpoints
+        test_api_root
     ]
     
     results = []

@@ -8,6 +8,7 @@ log() {
 
 # Initialize directories
 mkdir -p /data/responses
+mkdir -p /data/schemas
 
 # Configure nginx with assets path
 if [ -f /tmp/assets_path ]; then
@@ -38,9 +39,14 @@ nginx
 # Start backend
 log "Starting Python backend..."
 # Ensure backend has correct token
-export INITIAL_TOKEN="$(cat /tmp/token)"
+if [ -f /tmp/token ]; then
+    export INITIAL_TOKEN="$(cat /tmp/token)"
+else
+    log "WARNING: No token file found, using environment variable"
+fi
 # Ensure data directory exists and is writable
 mkdir -p /data/responses
+mkdir -p /data/schemas
 mkdir -p /data/logs
 python app.py > /data/logs/backend.log 2>&1 &
 BACKEND_PID=$!
@@ -57,7 +63,7 @@ fi
 log "Waiting for backend to be ready..."
 ATTEMPTS=0
 MAX_ATTEMPTS=30
-until curl -s http://localhost:8000/health > /dev/null; do
+until curl -s http://localhost:8000/api/health > /dev/null; do
     ATTEMPTS=$((ATTEMPTS + 1))
     if [ $ATTEMPTS -ge $MAX_ATTEMPTS ]; then
         log "Backend failed to start after $MAX_ATTEMPTS attempts"
