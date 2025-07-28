@@ -16,8 +16,15 @@ services:
       - ${SCHEMA_PATH:-./schemas}:/schemas:ro
       # Data storage volume
       - ${DATA_PATH:-./data}:/data:rw
-      # Development volumes
-      - ./docker/backend:/app  # For live backend changes
+      # Development volumes - mount individual files to preserve scripts directory
+      - ./docker/backend/app.py:/app/app.py:ro
+      - ./docker/backend/auth.py:/app/auth.py:ro
+      - ./docker/backend/validation.py:/app/validation.py:ro
+      - ./docker/backend/logging_config.py:/app/logging_config.py:ro
+      - ./docker/backend/config.py:/app/config.py:ro
+      - ./scripts:/app/scripts:ro  # Mount scripts directory
+      - ./config/ssl/setup-ssl.sh:/app/scripts/setup-ssl.sh:ro  # Mount SSL setup script
+      - ./config/nginx/default.conf:/etc/nginx/conf.d/default.conf.template:ro  # Mount nginx config
       - ./docker/backend/tests:/app/tests:ro  # Mount from backend directory
     environment:
       # Core settings
