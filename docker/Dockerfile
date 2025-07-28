@@ -106,7 +106,7 @@ ENV REPROSCHEMA_BACKEND_BASEDIR=/data
 ENV PORT=8000
 
 # Make scripts executable
-RUN chmod +x scripts/*.sh  # Make all shell scripts executable
+RUN chmod +x /app/scripts/*.sh && ls -la /app/scripts/
 
 EXPOSE 80 8000
-CMD ["./scripts/start.sh"]
+CMD ["/app/scripts/start.sh"]
