@@ -28,8 +28,10 @@ jobs:
           docker compose -f docker-compose.dev.yml up -d
           # Install test dependencies
           docker compose -f docker-compose.dev.yml exec -T reproschema-server pip install pytest pytest-asyncio pytest-cov sanic-testing
+          # Create test directories in container
+          docker compose -f docker-compose.dev.yml exec -T reproschema-server bash -c "mkdir -p /tmp/test-data/schemas /tmp/test-data/responses"
           # Run tests with proper environment
-          docker compose -f docker-compose.dev.yml exec -T reproschema-server bash -c "cd /app && python -m pytest tests/ -v"
+          docker compose -f docker-compose.dev.yml exec -T reproschema-server bash -c "cd /app && REPROSCHEMA_BACKEND_BASEDIR=/tmp/test-data python -m pytest tests/ -v"
           docker compose -f docker-compose.dev.yml down
         env:
           # Core settings

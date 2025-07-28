@@ -31,11 +31,18 @@ def test_app():
     # Create test data directory
     with tempfile.TemporaryDirectory() as tmpdir:
         os.environ['REPROSCHEMA_BACKEND_BASEDIR'] = tmpdir
-        # Create required directories
-        Path(tmpdir).joinpath('schemas').mkdir(exist_ok=True)
-        Path(tmpdir).joinpath('responses').mkdir(exist_ok=True)
+        # Create required directories with parents=True to ensure they exist
+        Path(tmpdir).joinpath('schemas').mkdir(parents=True, exist_ok=True)
+        Path(tmpdir).joinpath('responses').mkdir(parents=True, exist_ok=True)
         
-        # Import app after setting env vars
+        # Import modules AFTER setting env vars and creating directories
+        # This ensures config.py picks up the correct paths
+        import sys
+        modules_to_reload = ['config', 'app', 'auth', 'validation', 'logging_config']
+        for module in modules_to_reload:
+            if module in sys.modules:
+                del sys.modules[module]
+        
         from app import app
         
         yield app
@@ -47,13 +54,12 @@ def test_app():
         os.environ.clear()
         os.environ.update(old_env)
 
-# Import modules at module level for other fixtures and tests
-from auth import AuthManager
-from validation import DataValidator, ValidationError
+# DON'T import at module level - import inside fixtures/tests to avoid module caching issues
 
 @pytest.fixture
 def auth_manager():
     """Create auth manager for testing"""
+    from auth import AuthManager
     return AuthManager()
 
 @pytest.fixture

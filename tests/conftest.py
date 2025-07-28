@@ -5,21 +5,28 @@ import sys
 import os
 from pathlib import Path
 import tempfile
+import pytest
+import shutil
 
 # Add the backend directory to Python path
 backend_dir = Path(__file__).parent.parent / "docker" / "backend"
 sys.path.insert(0, str(backend_dir))
 
-# Set default test environment variables
-os.environ.setdefault('ENV', 'test')
-os.environ.setdefault('JWT_SECRET_KEY', 'test-secret-key-for-testing-only')
-os.environ.setdefault('INITIAL_TOKEN', 'test-initial-token')
-os.environ.setdefault('DEV_MODE', '1')
+# DON'T set environment variables here - let the fixtures handle it
+# This prevents module import issues
 
-# Create a temporary directory for tests
-test_dir = tempfile.mkdtemp(prefix='reproschema-test-')
-os.environ.setdefault('REPROSCHEMA_BACKEND_BASEDIR', test_dir)
+def pytest_configure(config):
+    """Set up test configuration"""
+    # Clear any cached modules that might have been imported
+    modules_to_clear = ['config', 'app', 'auth', 'validation', 'logging_config']
+    for module in modules_to_clear:
+        if module in sys.modules:
+            del sys.modules[module]
 
-# Create required directories
-Path(test_dir).joinpath('schemas').mkdir(exist_ok=True, parents=True)
-Path(test_dir).joinpath('responses').mkdir(exist_ok=True, parents=True)
+@pytest.fixture(scope='session')
+def test_base_dir():
+    """Create a base directory for all tests"""
+    test_dir = tempfile.mkdtemp(prefix='reproschema-test-')
+    yield test_dir
+    # Cleanup after all tests
+    shutil.rmtree(test_dir, ignore_errors=True)
