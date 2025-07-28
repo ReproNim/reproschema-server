@@ -136,6 +136,7 @@ class TestAuthentication:
 # Test Input Validation
 class TestValidation:
     def test_validate_project_name(self):
+        from validation import DataValidator, ValidationError
         """Test project name validation"""
         # Valid names
         assert DataValidator.validate_project_name('test-project') == 'test-project'
@@ -150,6 +151,7 @@ class TestValidation:
             DataValidator.validate_project_name('a' * 51)  # Too long
             
     def test_validate_user_id(self):
+        from validation import DataValidator, ValidationError
         """Test user ID validation"""
         # Valid IDs
         assert DataValidator.validate_user_id('user.123') == 'user.123'
@@ -162,6 +164,7 @@ class TestValidation:
             DataValidator.validate_user_id('user!test')  # ! not allowed
             
     def test_validate_schema_url(self):
+        from validation import DataValidator, ValidationError
         """Test schema URL validation"""
         # Valid URLs
         valid_url = 'https://example.com/schema.json'
@@ -176,6 +179,7 @@ class TestValidation:
             DataValidator.validate_schema_url('not-a-url')
             
     def test_sanitize_filename(self):
+        from validation import DataValidator, ValidationError
         """Test filename sanitization"""
         # Safe filenames
         assert DataValidator.sanitize_filename('test.json') == 'test.json'
@@ -192,6 +196,7 @@ class TestValidation:
         assert DataValidator.sanitize_filename('con.txt') == 'con.txt'  # Windows reserved
         
     def test_validate_response_data(self):
+        from validation import DataValidator, ValidationError
         """Test response data validation"""
         # Valid data
         valid_data = {
@@ -320,6 +325,7 @@ class TestAPIEndpoints:
 class TestSecurity:
     def test_jwt_secret_required_in_production(self):
         """Test that JWT secret is required in production"""
+        from auth import AuthManager
         # Temporarily modify environment
         original_env = os.environ.get('ENV')
         original_key = os.environ.get('JWT_SECRET_KEY')

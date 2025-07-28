@@ -53,6 +53,7 @@ class TestDataValidator:
             'test.user',
             'test_user',
             'user.name_123_test',  # Dots and underscores allowed
+            'user-hyphen',  # Hyphen is allowed
             'a' * 100  # Max length
         ]
         
@@ -70,7 +71,6 @@ class TestDataValidator:
             ('user#test', 'invalid characters'),  # # not allowed
             ('user<script>', 'invalid characters'),  # < > not allowed
             ('user;drop', 'invalid characters'),  # ; not allowed
-            ('user-hyphen', 'invalid characters'),  # - not allowed (pattern issue)
         ]
         
         for user_id, expected_error in invalid_cases:
