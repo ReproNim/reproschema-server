@@ -2,7 +2,7 @@
 FROM python:3.11-slim as backend-builder
 WORKDIR /build
 COPY docker/backend/. .
-RUN pip install --no-cache-dir sanic sanic-ext requests jsonschema uuid
+RUN pip install --no-cache-dir sanic sanic-ext requests jsonschema uuid PyJWT bcrypt
 
 # Start backend temporarily to get token
 RUN mkdir -p /data/logs && \
@@ -70,7 +70,7 @@ RUN apt-get update && \
     rm -f /etc/nginx/sites-enabled/default
 
 # Install Python dependencies
-RUN pip install --no-cache-dir sanic sanic-ext requests jsonschema uuid
+RUN pip install --no-cache-dir sanic sanic-ext requests jsonschema uuid PyJWT bcrypt
 
 # Copy frontend files
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html/
@@ -78,6 +78,9 @@ COPY --from=frontend-builder /app/dist /usr/share/nginx/html/
 # Copy backend files
 COPY docker/backend/app.py ./
 COPY docker/backend/config.py ./
+COPY docker/backend/auth.py ./
+COPY docker/backend/validation.py ./
+COPY docker/backend/logging_config.py ./
 COPY scripts scripts
 COPY config/nginx/default.conf /etc/nginx/conf.d/default.conf.template
 RUN envsubst '${ASSETS_PUBLIC_PATH}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf

@@ -33,8 +33,8 @@ services:
       
       # Backend configuration
       - REPROSCHEMA_BACKEND_BASEDIR=/data
-      # For development mode
-      - DEV8dac6d02a913=${DEV_MODE:-1}
+      # For development mode  
+      - DEV_MODE=${DEV_MODE:-1}
       - BACKEND_URL=${BACKEND_URL:-/api}
       # Project name for data organization
       - PROJECT_NAME=${PROJECT_NAME:-development}  # Default to development
