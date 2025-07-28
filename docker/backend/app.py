@@ -65,7 +65,12 @@ async def generic_error_handler(request, exception):
     
     return sanic_json({"error": "Internal server error"}, status=500)
 
-# Health endpoint
+# Health endpoints
+@app.get("/health")
+async def health_check_legacy(request) -> JSONResponse:
+    """Legacy health check endpoint - redirects to /api/health"""
+    return await health_check(request)
+
 @app.get("/api/health")
 async def health_check(request) -> JSONResponse:
     """Health check endpoint"""
@@ -90,6 +95,7 @@ async def health_check(request) -> JSONResponse:
         health_status["status"] = "degraded"
     
     return sanic_json(health_status, status=overall_status)
+
 
 # Authentication endpoints
 @app.get("/api/token")
@@ -139,7 +145,7 @@ async def get_token(request) -> JSONResponse:
             logger.error(f"Token creation error: {str(e)}")
             raise ValidationError("Failed to create token")
 
-@app.post("/api/token/refresh")
+@app.post("/api/token/refresh", name="refresh_token")
 @require_auth()
 async def refresh_token(request) -> JSONResponse:
     """Refresh an existing token"""
@@ -171,7 +177,7 @@ async def refresh_token(request) -> JSONResponse:
             raise ValidationError("Failed to refresh token")
 
 # Data submission endpoint
-@app.post("/api/responses")
+@app.post("/api/responses", name="submit_responses")
 @require_auth('submit_responses')
 async def submit_data(request) -> JSONResponse:
     """Submit response data"""
@@ -228,7 +234,7 @@ async def submit_data(request) -> JSONResponse:
             raise ValidationError("Failed to save response")
 
 # Schema endpoint
-@app.get("/api/schema/<url:path>")
+@app.get("/api/schema/<url:path>", name="get_schema")
 @require_auth('read_schema')
 async def get_schema(request, url: str) -> JSONResponse:
     """Get schema from URL or local file"""
@@ -355,5 +361,6 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         debug=os.getenv('DEBUG', 'false').lower() == 'true',
-        auto_reload=os.getenv('AUTO_RELOAD', 'false').lower() == 'true'
+        auto_reload=os.getenv('AUTO_RELOAD', 'false').lower() == 'true',
+        single_process=True  # Required for Docker
     )

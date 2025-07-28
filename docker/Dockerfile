@@ -4,13 +4,14 @@ WORKDIR /build
 COPY docker/backend/. .
 RUN pip install --no-cache-dir sanic sanic-ext requests jsonschema uuid PyJWT bcrypt
 
-# Start backend temporarily to get token
-RUN mkdir -p /data/logs && \
-    python app.py > /data/logs/startup.log 2>&1 & \
-    sleep 2 && \
-    grep "Warning: INITIAL_TOKEN not set, generated:" /data/logs/startup.log | head -n1 | cut -d':' -f3 | tr -d ' ' > /tmp/token && \
-    echo "Saved token: $(cat /tmp/token)" && \
-    cat /data/logs/startup.log  # Debug output
+# Set environment variables for token generation
+ENV JWT_SECRET_KEY=build-time-secret
+ENV INITIAL_TOKEN=build-time-token
+ENV ENV=development
+
+# Generate a token for the build
+RUN python -c "import uuid; print(uuid.uuid4().hex)" > /tmp/token && \
+    echo "Generated token: $(cat /tmp/token)"
 
 # 2. Frontend stage
 FROM node:18-alpine as frontend-builder
@@ -60,8 +61,8 @@ WORKDIR /app
 # Get assets path and token from frontend stage
 COPY --from=frontend-builder /tmp/assets_path /tmp/assets_path
 COPY --from=frontend-builder /tmp/token /tmp/token
-ENV ASSETS_PUBLIC_PATH="$(cat /tmp/assets_path)"
-ENV INITIAL_TOKEN="$(cat /tmp/token)"
+# These will be read at runtime by the start script
+# ENV commands don't support shell substitution
 
 # Install nginx and other required packages
 RUN apt-get update && \
