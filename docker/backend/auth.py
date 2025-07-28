@@ -27,9 +27,11 @@ class AuthManager:
     def __init__(self):
         self.secret_key = os.getenv('JWT_SECRET_KEY')
         if not self.secret_key:
-            # Generate a secure secret key if not provided
+            if os.getenv('ENV', 'production').lower() == 'production':
+                raise ValueError("JWT_SECRET_KEY must be set in production environment")
+            # Only generate temporary key in development
             self.secret_key = secrets.token_urlsafe(32)
-            logger.warning("JWT_SECRET_KEY not set, using generated key (not persistent)")
+            logger.warning("JWT_SECRET_KEY not set, using generated key (development only)")
         
         self.initial_token_hash = self._get_initial_token_hash()
         self.algorithm = 'HS256'
@@ -124,18 +126,20 @@ def require_auth(permission: str = None):
     """Decorator for endpoints requiring authentication"""
     def decorator(func):
         async def wrapper(request, *args, **kwargs):
+            from sanic import json as sanic_json
+            
             auth_header = request.headers.get('Authorization')
             if not auth_header:
-                return {"error": "Authorization header required"}, 401
+                return sanic_json({"error": "Authorization header required"}, status=401)
             
             auth_manager = request.app.ctx.auth_manager
             token_data = auth_manager.verify_auth_token(auth_header)
             
             if not token_data:
-                return {"error": "Invalid or expired token"}, 401
+                return sanic_json({"error": "Invalid or expired token"}, status=401)
                 
             if permission and not auth_manager.has_permission(token_data, permission):
-                return {"error": f"Permission '{permission}' required"}, 403
+                return sanic_json({"error": f"Permission '{permission}' required"}, status=403)
             
             # Add token data to request context
             request.ctx.token_data = token_data

@@ -2,6 +2,7 @@
 Input validation and data sanitization for ReproSchema Server
 Ensures data integrity and prevents injection attacks
 """
+import os
 import re
 import json
 from typing import Any, Dict, List, Optional, Union
@@ -137,9 +138,15 @@ class DataValidator:
         if not filename:
             raise ValidationError("Filename is required")
         
+        # Remove path separators and null bytes
+        filename = filename.replace('/', '_').replace('\\', '_').replace('\0', '_')
+        
         # Remove dangerous characters
-        sanitized = re.sub(r'[<>:"/\\|?*]', '_', filename)
-        sanitized = re.sub(r'\.\.', '_', sanitized)  # Prevent directory traversal
+        sanitized = re.sub(r'[<>:"|?*]', '_', filename)
+        
+        # Remove any directory traversal attempts
+        from pathlib import Path
+        sanitized = Path(sanitized).name  # Gets just the filename, no path components
         
         if len(sanitized) > 255:
             # Keep extension if possible

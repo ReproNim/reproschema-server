@@ -8,7 +8,7 @@ RESPONSE_DIR = Path(BACKEND_BASEDIR) / 'responses'
 
 # Authentication - remove JWT, add token auth
 INITIAL_TOKEN = os.getenv('INITIAL_TOKEN')
-DEV_MODE = os.getenv('DEV8dac6d02a913', '0')
+DEV_MODE = os.getenv('DEV_MODE', '0')
 
 # Schema sources and security 
 ALLOWED_ORIGINS = [

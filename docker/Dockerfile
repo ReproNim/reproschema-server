@@ -89,10 +89,14 @@ RUN chmod +x /app/scripts/setup-ssl.sh
 # Create SSL directory
 RUN mkdir -p /etc/nginx/ssl
 
+# Create app user for security
+RUN useradd -m -u 1000 -s /bin/bash appuser
+
 # Create necessary directories with proper permissions
 RUN mkdir -p /schemas /data && \
     mkdir -p /data/responses && \
-    chmod -R 777 /data  # Ensure backend can write to data directory
+    chown -R appuser:appuser /data && \
+    chmod -R 755 /data  # Secure permissions - owner can write, others can only read
 
 # Environment variables
 ENV REPROSCHEMA_BACKEND_BASEDIR=/data
